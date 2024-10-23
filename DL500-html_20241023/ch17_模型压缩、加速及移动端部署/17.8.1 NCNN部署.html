@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>17&period;8&period;1 NCNN&#x90e8;&#x7f72;</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h3 id="1781-ncnn部署">17.8.1 NCNN部署</h3>
+<h5 id="1在电脑端使用ncnn实现分类alexnet">1.在电脑端使用ncnn实现分类(alexnet)</h5>
+<p>s1，安装g++，cmake，protobuf，opencv</p>
+<p>s2，对源码进行编译</p>
+<pre><code class="language-shell">git clone https://github.com/Tencent/ncnn
+<span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cd</span> &lt;ncnn-root-dir&gt;</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">mkdir</span> -p build</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cd</span> build</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash">cmake ..</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash">make -j4</span>
+</code></pre>
+<p>s3，准备caffe模型文件(alexnet)</p>
+<pre><code>deploy.prototxt  
+snapshot_10000.caffemodel  
+</code></pre>
+<p>alexnet   <a href="https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet">deploy.prototxt</a>， <a href="http://dl.caffe.berkeleyvision.org/bvlc_alexnet.caffemodel">caffemodel</a></p>
+<p>s4，使用ncnn转换工具将旧caffe版本的prototxt和caffemodel转新版本</p>
+<p>将旧caffe版本的prototxt和caffemodel存放在caffe/build/tools目录下，执行如下命令完成转换</p>
+<pre><code class="language-shell">./upgrade_net_proto_text [old prototxt] [new prototxt]
+./upgrade_net_proto_binary [old caffemodel] [new caffemodel]
+</code></pre>
+<p>s5，将deploy.prototxt中输入层替换成input层(如果只读取一张图片将dim设置为1)</p>
+<pre><code class="language-protobuf">layer {
+  name: <span class="hljs-string">&quot;data&quot;</span>
+  type: <span class="hljs-string">&quot;Input&quot;</span>
+  top: <span class="hljs-string">&quot;data&quot;</span>
+  input_param { shape: { dim: <span class="hljs-number">1</span> dim: <span class="hljs-number">3</span> dim: <span class="hljs-number">227</span> dim: <span class="hljs-number">227</span> } }
+}
+</code></pre>
+<p>s6，使用caffe2ncnn工具将caffe model转成ncnn model</p>
+<pre><code class="language-shell">./caffe2ncnn deploy.prototxt bvlc_alexnet.caffemodel alexnet.param alexnet.bin
+</code></pre>
+<p>在ncnn/build/tools目录下生成param和bin文件。</p>
+<p>s7，对模型参数进行加密</p>
+<pre><code class="language-shell">./ncnn2mem alexnet.param alexnet.bin alexnet.id.h alexnet.mem.h
+</code></pre>
+<p>在ncnn/build/tools目录下生成.param、.bin和.h文件。</p>
+<p>alexnet.param    网络的模型参数</p>
+<p>alexnet.bin   网络的权重</p>
+<p>alexnet.id.h   在预测图片的时候使用到</p>
+<p>s8，编写pc端代码(参考<a href="https://blog.csdn.net/qq_36982160/article/details/79929869">https://blog.csdn.net/qq_36982160/article/details/79929869</a>)</p>
+<pre><code class="language-c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span> </span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;algorithm&gt;</span> </span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span> </span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&quot;gesture.id.h&quot;</span> </span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;net.h&quot;</span> </span>
+<span class="hljs-comment">//使用ncnn，传入的参数第一个是你需要预测的数据，第二个参数是各个类别的得分vector，注意传入的是地址，这样才能在这个函数中改变其值 </span>
+<span class="hljs-function"><span class="hljs-type">static</span> <span class="hljs-type">int</span> <span class="hljs-title">detect_squeezenet</span><span class="hljs-params">( <span class="hljs-type">float</span> *data, std::vector&lt;<span class="hljs-type">float</span>&gt;&amp; cls_scores)</span> </span>{ 
+	<span class="hljs-comment">//实例化ncnn：Net，注意include &quot;net.h&quot;，不要在意这时候因为找不到net.h文件而include&lt;net.h&gt;报错，后文会介绍正确的打开方式 </span>
+	ncnn::Net squeezenet; 
+	
+	<span class="hljs-comment">//加载二进制文件，也是照写，后面会介绍对应文件应该放的正确位置 </span>
+	<span class="hljs-type">int</span> a=squeezenet.<span class="hljs-built_in">load_param</span>(<span class="hljs-string">&quot;demo.param&quot;</span>); 
+	<span class="hljs-type">int</span> b=squeezenet.<span class="hljs-built_in">load_param_bin</span>(<span class="hljs-string">&quot;demo.bin&quot;</span>); 
+
+	<span class="hljs-comment">//实例化Mat，前三个参数是维度，第四个参数是传入的data，维度的设置根据你自己的数据进行设置，顺序是w、h、c </span>
+	ncnn::Mat in = ncnn::<span class="hljs-built_in">Mat</span>(<span class="hljs-number">550</span>, <span class="hljs-number">8</span>, <span class="hljs-number">2</span>, data); 
+	
+	<span class="hljs-comment">//实例化Extractor </span>
+	ncnn::Extractor ex = squeezenet.<span class="hljs-built_in">create_extractor</span>(); 
+	ex.<span class="hljs-built_in">set_light_mode</span>(<span class="hljs-literal">true</span>); 
+	<span class="hljs-comment">//注意把&quot;data&quot;换成你deploy中的数据层名字 </span>
+	<span class="hljs-type">int</span> d= ex.<span class="hljs-built_in">input</span>(<span class="hljs-string">&quot;data&quot;</span>, in); 
+	
+	ncnn::Mat out; 
+	<span class="hljs-comment">//这里是真正的终点，不多说了，只能仰天膜拜nihui大牛，重点是将prob换成你deploy中最后一层的名字 </span>
+	<span class="hljs-type">int</span> c=ex.<span class="hljs-built_in">extract</span>(<span class="hljs-string">&quot;prob&quot;</span>, out); 
+	
+	<span class="hljs-comment">//将out中的值转化为我们的cls_scores，这样就可以返回不同类别的得分了 </span>
+	cls_scores.<span class="hljs-built_in">resize</span>(out.w); 
+	<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j=<span class="hljs-number">0</span>; j&lt;out.w; j++) { 
+		cls_scores[j] = out[j]; 
+		} 
+		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>; 
+	} 
+
+<span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span>** argv)</span> </span>{ 
+	<span class="hljs-comment">//注意，这里的argv是之后从终端输入的参数，我这里是数据源的路径,因为我是从两个文件中生成一个总的数据，所以用了argv[1]和argv[2]，你也可以自己根据需求改变 </span>
+	<span class="hljs-type">const</span> <span class="hljs-type">char</span>* imagepath1 = argv[<span class="hljs-number">1</span>]; 
+	<span class="hljs-type">const</span> <span class="hljs-type">char</span>* imagepath2=argv[<span class="hljs-number">2</span>]; 
+	
+	FILE *fopeni=<span class="hljs-literal">NULL</span>; 
+	FILE *fopenq=<span class="hljs-literal">NULL</span>; 
+	
+	fopeni=<span class="hljs-built_in">fopen</span>(imagepath1,<span class="hljs-string">&quot;r&quot;</span>); 
+	fopenq=<span class="hljs-built_in">fopen</span>(imagepath2,<span class="hljs-string">&quot;r&quot;</span>); 
+	
+	<span class="hljs-comment">//这是我的数据，i和q相当于图片的两个通道 </span>
+	<span class="hljs-type">float</span> i[<span class="hljs-number">4400</span>]; 
+	<span class="hljs-type">float</span> q[<span class="hljs-number">4400</span>]; 
+	<span class="hljs-type">float</span> data[<span class="hljs-number">8800</span>]; 
+	
+	<span class="hljs-type">int</span> count=<span class="hljs-number">4400</span>; 
+	<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>; j &lt; count; ++j) { 
+		<span class="hljs-built_in">fscanf</span>(fopeni,<span class="hljs-string">&quot;%f&quot;</span>,&amp;i[j]); 
+		<span class="hljs-built_in">fscanf</span>(fopenq,<span class="hljs-string">&quot;%f&quot;</span>,&amp;q[j]); 
+	} 
+	
+	<span class="hljs-comment">//这是将iq（相当于图片的两个通道的数据）转化为一个一维向量，需要特别注意的是数据维度的顺序 </span>
+	<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>; j &lt; <span class="hljs-number">8800</span>; ++j) { 
+		<span class="hljs-keyword">if</span> (j&lt;<span class="hljs-number">4400</span>) { 
+			data[j]=i[j]; 
+		}
+		<span class="hljs-keyword">else</span>{ 
+			data[j]=q[j<span class="hljs-number">-4400</span>]; 
+		} 
+	} 
+	
+	<span class="hljs-type">char</span> a[<span class="hljs-number">13</span>]={<span class="hljs-string">&#x27;A&#x27;</span>,<span class="hljs-string">&#x27;B&#x27;</span>,<span class="hljs-string">&#x27;C&#x27;</span>,<span class="hljs-string">&#x27;F&#x27;</span>,<span class="hljs-string">&#x27;G&#x27;</span>,<span class="hljs-string">&#x27;H&#x27;</span>,<span class="hljs-string">&#x27;I&#x27;</span>,<span class="hljs-string">&#x27;J&#x27;</span>,<span class="hljs-string">&#x27;K&#x27;</span>,<span class="hljs-string">&#x27;L&#x27;</span>,<span class="hljs-string">&#x27;M&#x27;</span>,<span class="hljs-string">&#x27;N&#x27;</span>,<span class="hljs-string">&#x27;O&#x27;</span>}; 
+	
+	<span class="hljs-comment">//注意，这里是调用ncnn的代码 </span>
+	std::vector&lt;<span class="hljs-type">float</span>&gt; cls_scores;  <span class="hljs-comment">//用来存储最终各类别的得分 </span>
+	<span class="hljs-comment">//这个函数的实现在上面，快去看 </span>
+	<span class="hljs-built_in">detect_squeezenet</span>(data, cls_scores); 
+	<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; cls_scores.<span class="hljs-built_in">size</span>(); ++i) { 
+		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%c : %f\n&quot;</span>, a[i],cls_scores[i]); 
+	} 
+	
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>; 
+}
+</code></pre>
+<p>代码是最简单的ncnn使用场景，可以根据自己需求加入代码。</p>
+<p>s9，编译代码</p>
+<p>(1) 编写CMakeLists.txt</p>
+<p>在CMakeLists.txt增加如下两行代码</p>
+<pre><code class="language-c">add_executable(demo demo.cpp)
+target_link_libraries(demo ncnn)
+</code></pre>
+<p>CMakeLists.txt如下</p>
+<pre><code>find_package(OpenCV QUIET COMPONENTS core highgui imgproc imgcodecs) 
+if(NOT OpenCV_FOUND) 
+	find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc) 
+endif() 
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src) 
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/../src) 
+
+add_executable(squeezenet squeezenet.cpp) 
+
+target_link_libraries(squeezenet ncnn ${OpenCV_LIBS}) 
+
+add_executable(fasterrcnn fasterrcnn.cpp) 
+target_link_libraries(fasterrcnn ncnn ${OpenCV_LIBS}) 
+
+add_executable(demo demo.cpp) 
+target_link_libraries(demo ncnn) 
+
+add_subdirectory(ssd)
+</code></pre>
+<p>(2) 在ncnn根目录下CMakeLists.txt中编译examples语句的注释去掉</p>
+<pre><code>##############################################
+
+# add_subdirectory(examples)
+# add_subdirectory(benchmark)
+add_subdirectory(src)
+if(NOT ANDROID AND NOT IOS)
+add_subdirectory(tools)
+endif()
+</code></pre>
+<p>(3)ncnn/build目录下进行编译，生成demo可执行文件</p>
+<pre><code>make
+</code></pre>
+<p>s10，执行</p>
+<p>将生成的.param和.bin文件复制到ncnn/build/examples目录下，然后终端cd到ncnn/build/examples，执行：</p>
+<pre><code>./demo data_path1 data_path2
+</code></pre>
+<h5 id="2-win-x64-visual-studio-community-2017">2. Win x64 (Visual Studio Community 2017)</h5>
+<p>s1，安装Visual Studio Community 2017</p>
+<pre><code>download Visual Studio Community 2017 from https://visualstudio.microsoft.com/vs/community/
+install it
+Start → Programs → Visual Studio 2017 → Visual Studio Tools → x64 Native Tools Command Prompt for VS 2017
+</code></pre>
+<p>s2，编译protobuf</p>
+<pre><code class="language-powershell">download protobuf<span class="hljs-literal">-3</span>.<span class="hljs-number">4.0</span> from https://github.com/google/protobuf/archive/v3.<span class="hljs-number">4.0</span>.zip
+&gt; <span class="hljs-built_in">cd</span> &lt;protobuf<span class="hljs-literal">-root-dir</span>&gt;
+&gt; mkdir <span class="hljs-built_in">build-vs2017</span>
+&gt; <span class="hljs-built_in">cd</span> <span class="hljs-built_in">build-vs2017</span>
+&gt; cmake <span class="hljs-literal">-G</span><span class="hljs-string">&quot;NMake Makefiles&quot;</span> <span class="hljs-literal">-DCMAKE_BUILD_TYPE</span>=Release <span class="hljs-literal">-DCMAKE_INSTALL_PREFIX</span>=%<span class="hljs-built_in">cd</span>%/install <span class="hljs-literal">-Dprotobuf_BUILD_TESTS</span>=OFF <span class="hljs-literal">-Dprotobuf_MSVC_STATIC_RUNTIME</span>=OFF ../cmake
+&gt; nmake
+&gt; nmake install
+</code></pre>
+<p>s3，编译ncnn库</p>
+<pre><code class="language-powershell">&gt; <span class="hljs-built_in">cd</span> &lt;ncnn<span class="hljs-literal">-root-dir</span>&gt;
+&gt; mkdir <span class="hljs-literal">-p</span> <span class="hljs-built_in">build-vs2017</span>
+&gt; <span class="hljs-built_in">cd</span> <span class="hljs-built_in">build-vs2017</span>
+&gt; cmake <span class="hljs-literal">-G</span><span class="hljs-string">&quot;NMake Makefiles&quot;</span> <span class="hljs-literal">-DCMAKE_BUILD_TYPE</span>=Release <span class="hljs-literal">-DCMAKE_INSTALL_PREFIX</span>=%<span class="hljs-built_in">cd</span>%/install <span class="hljs-literal">-DProtobuf_INCLUDE_DIR</span>=&lt;protobuf<span class="hljs-literal">-root-dir</span>&gt;/<span class="hljs-built_in">build-vs2017</span>/install/include <span class="hljs-literal">-DProtobuf_LIBRARIES</span>=&lt;protobuf<span class="hljs-literal">-root-dir</span>&gt;/<span class="hljs-built_in">build-vs2017</span>/install/lib/libprotobuf.lib <span class="hljs-literal">-DProtobuf_PROTOC_EXECUTABLE</span>=&lt;protobuf<span class="hljs-literal">-root-dir</span>&gt;/<span class="hljs-built_in">build-vs2017</span>/install/bin/protoc.exe ..
+&gt; nmake
+&gt; nmake install
+
+pick <span class="hljs-built_in">build-vs2017</span>/install folder <span class="hljs-keyword">for</span> further usage
+</code></pre>
+<h5 id="3-android端使用ncnn">3. Android端使用ncnn</h5>
+<p>参考：</p>
+<p><a href="https://blog.csdn.net/qq_33200967/article/details/82421089">https://blog.csdn.net/qq_33200967/article/details/82421089</a></p>
+<p><a href="https://blog.csdn.net/qq_36982160/article/details/79931741">https://blog.csdn.net/qq_36982160/article/details/79931741</a></p>
+<p>s1，使用Android Studio安装ndk</p>
+<p>1）打开Android Studio，依次点击File-&gt;Settings-&gt;Appearance&amp;Behavior-&gt;System Settings-&gt;Android SDK-&gt;SDK Tool，选中NDK，点击apply自动下载安装(如果安装成功会在SDK目录下生成ndk-bundle文件夹)；</p>
+<p>2）配置ndk的环境变量</p>
+<ul>
+<li>
+<p>打开profile</p>
+<pre><code class="language-shell">sudo vim /etc/profile
+</code></pre>
+</li>
+<li>
+<p>在profile文件末尾添加ndk路径</p>
+<pre><code class="language-shell">export NDK_HOME=sdkroot/ndk-bundle
+PATH=$NDK_HOME:$PATH
+</code></pre>
+</li>
+<li>
+<p>保存退出，使用source命令使环境变量生效</p>
+<pre><code class="language-shell">source /etc/profile
+</code></pre>
+</li>
+<li>
+<p>验证ndk是否配置成功</p>
+<pre><code class="language-shell">ndk-build -v
+</code></pre>
+</li>
+</ul>
+<p>s2，编译ncnn sdk</p>
+<p>通过如下命令编译ncnn sdk，会在ncnn/build-android下生成install文件夹，其中包括：include(调用ncnn所需的头文件)和lib(编译得到的ncnn库libncnn.a)</p>
+<pre><code class="language-shell">mkdir build-android
+cd build-android
+cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+    -DANDROID_ABI=&quot;armeabi-v7a&quot; -DANDROID_ARM_NEON=ON \
+    -DANDROID_PLATFORM=android-14 ..
+make
+make install
+make package
+</code></pre>
+<p>参数设置请参考：<a href="https://github.com/Tencent/ncnn/wiki/cmake-%E6%89%93%E5%8C%85-android-sdk">https://github.com/Tencent/ncnn/wiki/cmake-打包-android-sdk</a></p>
+<pre><code>ANDROID_ABI 是架构名字，&quot;armeabi-v7a&quot; 支持绝大部分手机硬件
+ANDROID_ARM_NEON 是否使用 NEON 指令集，设为 ON 支持绝大部分手机硬件
+ANDROID_PLATFORM 指定最低系统版本，&quot;android-14&quot; 就是 android-4.0
+</code></pre>
+<p>s3，对源码进行编译</p>
+<pre><code class="language-shell">git clone https://github.com/Tencent/ncnn
+<span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cd</span> &lt;ncnn-root-dir&gt;</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">mkdir</span> -p build</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cd</span> build</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash">cmake ..</span>
+<span class="hljs-meta prompt_">$ </span><span class="language-bash">make -j4</span>
+</code></pre>
+<p>s4，准备caffe模型文件(alexnet)</p>
+<pre><code>deploy.prototxt  
+snapshot_10000.caffemodel  
+</code></pre>
+<p>alexnet   <a href="https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet">deploy.prototxt</a>， <a href="http://dl.caffe.berkeleyvision.org/bvlc_alexnet.caffemodel">caffemodel</a></p>
+<p>s5，使用ncnn转换工具将旧caffe版本的prototxt和caffemodel转新版本</p>
+<p>将旧caffe版本的prototxt和caffemodel存放在caffe/build/tools目录下，执行如下命令完成转换</p>
+<pre><code class="language-shell">./upgrade_net_proto_text [old prototxt] [new prototxt]
+./upgrade_net_proto_binary [old caffemodel] [new caffemodel]
+</code></pre>
+<p>s6，将deploy.prototxt中输入层替换成input层(如果只读取一张图片将dim设置为1)</p>
+<pre><code class="language-protobuf">layer {
+  name: <span class="hljs-string">&quot;data&quot;</span>
+  type: <span class="hljs-string">&quot;Input&quot;</span>
+  top: <span class="hljs-string">&quot;data&quot;</span>
+  input_param { shape: { dim: <span class="hljs-number">1</span> dim: <span class="hljs-number">3</span> dim: <span class="hljs-number">227</span> dim: <span class="hljs-number">227</span> } }
+}
+</code></pre>
+<p>s7，使用caffe2ncnn工具将caffe model转成ncnn model</p>
+<pre><code class="language-shell">./caffe2ncnn deploy.prototxt bvlc_alexnet.caffemodel alexnet.param alexnet.bin
+</code></pre>
+<p>在ncnn/build/tools目录下生成param和bin文件。</p>
+<p>s8，对模型参数进行加密</p>
+<pre><code class="language-shell">./ncnn2mem alexnet.param alexnet.bin alexnet.id.h alexnet.mem.h
+</code></pre>
+<p>在ncnn/build/tools目录下生成.param、.bin和.h文件。</p>
+<p>alexnet.param    网络的模型参数</p>
+<p>alexnet.bin   网络的权重</p>
+<p>alexnet.id.h   在预测图片的时候使用到</p>
+<p>s9，开发安卓项目</p>
+<p>(1)在Android Studio上创建一个NCNN1，并选择Include C++ support</p>
+<p><img src="https://img-blog.csdn.net/20180905204155999?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzMjAwOTY3/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p>(2)在main目录下创建assets目录，并将alexnet.param、alexnet.bin、label.txt拷贝其中</p>
+<p>(3)将include文件夹和 alexnet.id.h拷贝到cpp目录下</p>
+<p>(4)在main目录下创建jniLibs/armeabi-v7a/目录，并将alexnet.id.h 拷贝其中</p>
+<p>(5)在cpp文件夹下创建C++文件，用于加载模型和预测图片</p>
+<pre><code class="language-C++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;android/bitmap.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;android/log.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;jni.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span>
+<span class="hljs-comment">// ncnn</span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;include/net.h&quot;</span> </span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;alexnet.id.h&quot;</span> </span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/time.h&gt;</span> </span>
+<span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span> </span>
+<span class="hljs-type">static</span> ncnn::UnlockedPoolAllocator g_blob_pool_allocator; 
+<span class="hljs-type">static</span> ncnn::PoolAllocator g_workspace_pool_allocator; 
+<span class="hljs-type">static</span> ncnn::Mat ncnn_param; 
+<span class="hljs-type">static</span> ncnn::Mat ncnn_bin; 
+<span class="hljs-type">static</span> ncnn::Net ncnn_net; 
+<span class="hljs-keyword">extern</span> <span class="hljs-string">&quot;C&quot;</span> { 
+<span class="hljs-comment">// public native boolean Init(byte[] param, byte[] bin, byte[] words); JNIEXPORT jboolean JNICALL </span>
+<span class="hljs-built_in">Java_com_example_ncnn1_NcnnJni_Init</span>(JNIEnv *env, jobject thiz, jbyteArray param, jbyteArray bin) { 
+	<span class="hljs-comment">// init param </span>
+	{ 
+		<span class="hljs-type">int</span> len = env-&gt;<span class="hljs-built_in">GetArrayLength</span>(param); 
+		ncnn_param.<span class="hljs-built_in">create</span>(len, (<span class="hljs-type">size_t</span>) <span class="hljs-number">1u</span>); 
+		env-&gt;<span class="hljs-built_in">GetByteArrayRegion</span>(param, <span class="hljs-number">0</span>, len, (jbyte *) ncnn_param); <span class="hljs-type">int</span> ret = ncnn_net.<span class="hljs-built_in">load_param</span>((<span class="hljs-type">const</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *) ncnn_param); 
+		__android_log_print(ANDROID_LOG_DEBUG, <span class="hljs-string">&quot;NcnnJni&quot;</span>, <span class="hljs-string">&quot;load_param %d %d&quot;</span>, ret, len); 
+	} 
+	
+	<span class="hljs-comment">// init bin </span>
+	{ 
+		<span class="hljs-type">int</span> len = env-&gt;<span class="hljs-built_in">GetArrayLength</span>(bin); 
+		ncnn_bin.<span class="hljs-built_in">create</span>(len, (<span class="hljs-type">size_t</span>) <span class="hljs-number">1u</span>); 
+		env-&gt;<span class="hljs-built_in">GetByteArrayRegion</span>(bin, <span class="hljs-number">0</span>, len, (jbyte *) ncnn_bin); 
+		<span class="hljs-type">int</span> ret = ncnn_net.<span class="hljs-built_in">load_model</span>((<span class="hljs-type">const</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *) ncnn_bin); 
+		__android_log_print(ANDROID_LOG_DEBUG, <span class="hljs-string">&quot;NcnnJni&quot;</span>, <span class="hljs-string">&quot;load_model %d %d&quot;</span>, ret, len); 
+	} 
+
+	ncnn::Option opt; 
+	opt.lightmode = <span class="hljs-literal">true</span>; 
+	opt.num_threads = <span class="hljs-number">4</span>; 
+	opt.blob_allocator = &amp;g_blob_pool_allocator; 
+	opt.workspace_allocator = &amp;g_workspace_pool_allocator; 
+
+	ncnn::<span class="hljs-built_in">set_default_option</span>(opt); 
+
+	<span class="hljs-keyword">return</span> JNI_TRUE; 
+} 
+
+<span class="hljs-comment">// public native String Detect(Bitmap bitmap); </span>
+<span class="hljs-function">JNIEXPORT jfloatArray JNICALL <span class="hljs-title">Java_com_example_ncnn1_NcnnJni_Detect</span><span class="hljs-params">(JNIEnv* env, jobject thiz, jobject bitmap)</span> 
+</span>{ 
+	<span class="hljs-comment">// ncnn from bitmap </span>
+	ncnn::Mat in; 
+	{ 
+		AndroidBitmapInfo info; 
+		<span class="hljs-built_in">AndroidBitmap_getInfo</span>(env, bitmap, &amp;info); 
+		<span class="hljs-type">int</span> width = info.width; <span class="hljs-type">int</span> height = info.height; 
+		<span class="hljs-keyword">if</span> (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) 
+			<span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>; 
+
+		<span class="hljs-type">void</span>* indata; 
+		<span class="hljs-built_in">AndroidBitmap_lockPixels</span>(env, bitmap, &amp;indata); 
+		<span class="hljs-comment">// 把像素转换成data，并指定通道顺序 </span>
+		in = ncnn::Mat::<span class="hljs-built_in">from_pixels</span>((<span class="hljs-type">const</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>*)indata, ncnn::Mat::PIXEL_RGBA2BGR, width, height); 
+		<span class="hljs-built_in">AndroidBitmap_unlockPixels</span>(env, bitmap); 
+	} 
+
+	<span class="hljs-comment">// ncnn_net </span>
+	std::vector&lt;<span class="hljs-type">float</span>&gt; cls_scores; 
+	{ 
+		<span class="hljs-comment">// 减去均值和乘上比例 </span>
+		<span class="hljs-type">const</span> <span class="hljs-type">float</span> mean_vals[<span class="hljs-number">3</span>] = {<span class="hljs-number">103.94f</span>, <span class="hljs-number">116.78f</span>, <span class="hljs-number">123.68f</span>}; 
+		<span class="hljs-type">const</span> <span class="hljs-type">float</span> scale[<span class="hljs-number">3</span>] = {<span class="hljs-number">0.017f</span>, <span class="hljs-number">0.017f</span>, <span class="hljs-number">0.017f</span>}; 
+
+		in.<span class="hljs-built_in">substract_mean_normalize</span>(mean_vals, scale); 
+
+		ncnn::Extractor ex = ncnn_net.<span class="hljs-built_in">create_extractor</span>(); 
+		<span class="hljs-comment">// 如果时不加密是使用ex.input(&quot;data&quot;, in); </span>
+		ex.<span class="hljs-built_in">input</span>(mobilenet_v2_param_id::BLOB_data, in); 
+
+		ncnn::Mat out; 
+		<span class="hljs-comment">// 如果时不加密是使用ex.extract(&quot;prob&quot;, out); </span>
+		ex.<span class="hljs-built_in">extract</span>(mobilenet_v2_param_id::BLOB_prob, out); 
+
+		<span class="hljs-type">int</span> output_size = out.w; 
+		jfloat *output[output_size]; 
+		<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>; j &lt; out.w; j++) { 
+			output[j] = &amp;out[j]; 
+		} 
+
+		jfloatArray jOutputData = env-&gt;<span class="hljs-built_in">NewFloatArray</span>(output_size); 
+		<span class="hljs-keyword">if</span> (jOutputData == <span class="hljs-literal">nullptr</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">nullptr</span>; 
+
+		env-&gt;<span class="hljs-built_in">SetFloatArrayRegion</span>(jOutputData, <span class="hljs-number">0</span>, output_size, <span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">const</span> jfloat *&gt;(*output)); <span class="hljs-comment">// copy </span>
+		<span class="hljs-keyword">return</span> jOutputData; 
+	} 
+} 
+}
+</code></pre>
+<p>(6)在项目包com.example.ncnn1下，修改MainActivity.java中的代码</p>
+<pre><code class="language-java"><span class="hljs-keyword">package</span> com.example.ncnn1; 
+<span class="hljs-keyword">import</span> android.Manifest; 
+<span class="hljs-keyword">import</span> android.app.Activity; 
+<span class="hljs-keyword">import</span> android.content.Intent; 
+<span class="hljs-keyword">import</span> android.content.pm.PackageManager; 
+<span class="hljs-keyword">import</span> android.content.res.AssetManager; 
+<span class="hljs-keyword">import</span> android.graphics.Bitmap; 
+<span class="hljs-keyword">import</span> android.graphics.BitmapFactory; 
+<span class="hljs-keyword">import</span> android.net.Uri; 
+<span class="hljs-keyword">import</span> android.os.Bundle; 
+<span class="hljs-keyword">import</span> android.support.annotation.NonNull; 
+<span class="hljs-keyword">import</span> android.support.annotation.Nullable; 
+<span class="hljs-keyword">import</span> android.support.v4.app.ActivityCompat; 
+<span class="hljs-keyword">import</span> android.support.v4.content.ContextCompat; 
+<span class="hljs-keyword">import</span> android.text.method.ScrollingMovementMethod; 
+<span class="hljs-keyword">import</span> android.util.Log; 
+<span class="hljs-keyword">import</span> android.view.View; 
+<span class="hljs-keyword">import</span> android.widget.Button; 
+<span class="hljs-keyword">import</span> android.widget.ImageView; 
+<span class="hljs-keyword">import</span> android.widget.TextView; 
+<span class="hljs-keyword">import</span> android.widget.Toast; 
+
+<span class="hljs-keyword">import</span> com.bumptech.glide.Glide; 
+<span class="hljs-keyword">import</span> com.bumptech.glide.load.engine.DiskCacheStrategy; 
+<span class="hljs-keyword">import</span> com.bumptech.glide.request.RequestOptions; 
+
+<span class="hljs-keyword">import</span> java.io.BufferedReader; 
+<span class="hljs-keyword">import</span> java.io.FileNotFoundException; 
+<span class="hljs-keyword">import</span> java.io.IOException; 
+<span class="hljs-keyword">import</span> java.io.InputStream; 
+<span class="hljs-keyword">import</span> java.io.InputStreamReader; 
+<span class="hljs-keyword">import</span> java.util.ArrayList; 
+<span class="hljs-keyword">import</span> java.util.Arrays; 
+<span class="hljs-keyword">import</span> java.util.List; 
+
+<span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MainActivity</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">Activity</span> { 
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">String</span> <span class="hljs-variable">TAG</span> <span class="hljs-operator">=</span> MainActivity.class.getName(); 
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">USE_PHOTO</span> <span class="hljs-operator">=</span> <span class="hljs-number">1001</span>; 
+	<span class="hljs-keyword">private</span> String camera_image_path; 
+	<span class="hljs-keyword">private</span> ImageView show_image; 
+	<span class="hljs-keyword">private</span> TextView result_text; 
+	<span class="hljs-keyword">private</span> <span class="hljs-type">boolean</span> <span class="hljs-variable">load_result</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>; <span class="hljs-keyword">private</span> <span class="hljs-type">int</span>[] ddims = {<span class="hljs-number">1</span>, <span class="hljs-number">3</span>, <span class="hljs-number">224</span>, <span class="hljs-number">224</span>}; 
+	<span class="hljs-keyword">private</span> <span class="hljs-type">int</span> <span class="hljs-variable">model_index</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; 
+	<span class="hljs-keyword">private</span> List&lt;String&gt; resultLabel = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;(); 
+	<span class="hljs-keyword">private</span> <span class="hljs-type">NcnnJni</span> <span class="hljs-variable">squeezencnn</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">NcnnJni</span>();
+
+	<span class="hljs-meta">@Override</span> 
+	<span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">onCreate</span><span class="hljs-params">(Bundle savedInstanceState)</span> { 
+		<span class="hljs-built_in">super</span>.onCreate(savedInstanceState); 
+		setContentView(R.layout.activity_main); 
+
+		<span class="hljs-keyword">try</span> { 
+			initSqueezeNcnn(); 
+		} <span class="hljs-keyword">catch</span> (IOException e) { 
+			Log.e(<span class="hljs-string">&quot;MainActivity&quot;</span>, <span class="hljs-string">&quot;initSqueezeNcnn error&quot;</span>); 
+		} 
+
+		init_view(); 
+		readCacheLabelFromLocalFile(); 
+	} 
+
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">initSqueezeNcnn</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> IOException { 
+		<span class="hljs-type">byte</span>[] param = <span class="hljs-literal">null</span>; 
+		<span class="hljs-type">byte</span>[] bin = <span class="hljs-literal">null</span>; 
+
+		{ 
+			<span class="hljs-type">InputStream</span> <span class="hljs-variable">assetsInputStream</span> <span class="hljs-operator">=</span> getAssets().open(<span class="hljs-string">&quot;mobilenet_v2.param.bin&quot;</span>); 
+			<span class="hljs-type">int</span> <span class="hljs-variable">available</span> <span class="hljs-operator">=</span> assetsInputStream.available(); 
+			param = <span class="hljs-keyword">new</span> <span class="hljs-title class_">byte</span>[available]; 
+			<span class="hljs-type">int</span> <span class="hljs-variable">byteCode</span> <span class="hljs-operator">=</span> assetsInputStream.read(param); 
+			assetsInputStream.close(); 
+		}
+
+		{ 
+			<span class="hljs-type">InputStream</span> <span class="hljs-variable">assetsInputStream</span> <span class="hljs-operator">=</span> getAssets().open(<span class="hljs-string">&quot;mobilenet_v2.bin&quot;</span>); 
+			<span class="hljs-type">int</span> <span class="hljs-variable">available</span> <span class="hljs-operator">=</span> assetsInputStream.available(); 
+			bin = <span class="hljs-keyword">new</span> <span class="hljs-title class_">byte</span>[available]; 
+			<span class="hljs-type">int</span> <span class="hljs-variable">byteCode</span> <span class="hljs-operator">=</span> assetsInputStream.read(bin); 
+			assetsInputStream.close(); 
+		} 
+
+		load_result = squeezencnn.Init(param, bin); 
+		Log.d(<span class="hljs-string">&quot;load model&quot;</span>, <span class="hljs-string">&quot;result:&quot;</span> + load_result); 
+	} 
+
+	<span class="hljs-comment">// initialize view </span>
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">init_view</span><span class="hljs-params">()</span> { 
+		request_permissions(); 
+		show_image = (ImageView) findViewById(R.id.show_image); 
+		result_text = (TextView) findViewById(R.id.result_text);
+		result_text.setMovementMethod(ScrollingMovementMethod.getInstance()); 
+		<span class="hljs-type">Button</span> <span class="hljs-variable">use_photo</span> <span class="hljs-operator">=</span> (Button) findViewById(R.id.use_photo); 
+
+		<span class="hljs-comment">// use photo click </span>
+		use_photo.setOnClickListener(<span class="hljs-keyword">new</span> <span class="hljs-title class_">View</span>.OnClickListener() { 
+			<span class="hljs-meta">@Override</span> 
+			<span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">onClick</span><span class="hljs-params">(View view)</span> { 
+				<span class="hljs-keyword">if</span> (!load_result) { 
+					Toast.makeText(MainActivity.<span class="hljs-built_in">this</span>, <span class="hljs-string">&quot;never load model&quot;</span>, Toast.LENGTH_SHORT).show(); 
+					<span class="hljs-keyword">return</span>; 
+				} 
+				PhotoUtil.use_photo(MainActivity.<span class="hljs-built_in">this</span>, USE_PHOTO); 
+			} 
+		}); 
+	} 
+
+	<span class="hljs-comment">// load label&#x27;s name </span>
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">readCacheLabelFromLocalFile</span><span class="hljs-params">()</span> { 
+		<span class="hljs-keyword">try</span> { 
+			<span class="hljs-type">AssetManager</span> <span class="hljs-variable">assetManager</span> <span class="hljs-operator">=</span> getApplicationContext().getAssets(); 
+			<span class="hljs-type">BufferedReader</span> <span class="hljs-variable">reader</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">BufferedReader</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">InputStreamReader</span>(assetManager.open(<span class="hljs-string">&quot;synset.txt&quot;</span>))); 
+			<span class="hljs-type">String</span> <span class="hljs-variable">readLine</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>; 
+			<span class="hljs-keyword">while</span> ((readLine = reader.readLine()) != <span class="hljs-literal">null</span>) { 
+				resultLabel.add(readLine); 
+			} 
+			reader.close(); 
+		} <span class="hljs-keyword">catch</span> (Exception e) { 
+			Log.e(<span class="hljs-string">&quot;labelCache&quot;</span>, <span class="hljs-string">&quot;error &quot;</span> + e); 
+		} 
+	} 
+
+	<span class="hljs-meta">@Override</span> 
+	<span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">onActivityResult</span><span class="hljs-params">(<span class="hljs-type">int</span> requestCode, <span class="hljs-type">int</span> resultCode, <span class="hljs-meta">@Nullable</span> Intent data)</span> { 
+		String image_path; 
+		<span class="hljs-type">RequestOptions</span> <span class="hljs-variable">options</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RequestOptions</span>().skipMemoryCache(<span class="hljs-literal">true</span>).diskCacheStrategy(DiskCacheStrategy.NONE); 
+		<span class="hljs-keyword">if</span> (resultCode == Activity.RESULT_OK) { 
+			<span class="hljs-keyword">switch</span> (requestCode) { 
+				<span class="hljs-keyword">case</span> USE_PHOTO: 
+					<span class="hljs-keyword">if</span> (data == <span class="hljs-literal">null</span>) { 
+						Log.w(TAG, <span class="hljs-string">&quot;user photo data is null&quot;</span>); 
+						<span class="hljs-keyword">return</span>; 
+					} 
+					<span class="hljs-type">Uri</span> <span class="hljs-variable">image_uri</span> <span class="hljs-operator">=</span> data.getData(); 
+					Glide.with(MainActivity.<span class="hljs-built_in">this</span>).load(image_uri).apply(options).into(show_image); 
+					<span class="hljs-comment">// get image path from uri </span>
+					image_path = PhotoUtil.get_path_from_URI(MainActivity.<span class="hljs-built_in">this</span>, image_uri); 
+					<span class="hljs-comment">// predict image </span>
+					predict_image(image_path);
+					<span class="hljs-keyword">break</span>; 
+			} 
+		} 
+	} 
+
+	<span class="hljs-comment">//  predict image </span>
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">predict_image</span><span class="hljs-params">(String image_path)</span> { 
+		<span class="hljs-comment">// picture to float array </span>
+		<span class="hljs-type">Bitmap</span> <span class="hljs-variable">bmp</span> <span class="hljs-operator">=</span> PhotoUtil.getScaleBitmap(image_path); 
+		<span class="hljs-type">Bitmap</span> <span class="hljs-variable">rgba</span> <span class="hljs-operator">=</span> bmp.copy(Bitmap.Config.ARGB_8888, <span class="hljs-literal">true</span>); 
+
+		<span class="hljs-comment">// resize to 227x227 </span>
+		<span class="hljs-type">Bitmap</span> <span class="hljs-variable">input_bmp</span> <span class="hljs-operator">=</span> Bitmap.createScaledBitmap(rgba, ddims[<span class="hljs-number">2</span>], ddims[<span class="hljs-number">3</span>], <span class="hljs-literal">false</span>); 
+		<span class="hljs-keyword">try</span> { 
+			<span class="hljs-comment">// Data format conversion takes too long </span>
+			<span class="hljs-comment">// Log.d(&quot;inputData&quot;, Arrays.toString(inputData)); </span>
+			<span class="hljs-type">long</span> <span class="hljs-variable">start</span> <span class="hljs-operator">=</span> System.currentTimeMillis(); 
+			<span class="hljs-comment">// get predict result </span>
+			<span class="hljs-type">float</span>[] result = squeezencnn.Detect(input_bmp); 
+			<span class="hljs-type">long</span> <span class="hljs-variable">end</span> <span class="hljs-operator">=</span> System.currentTimeMillis(); 
+			Log.d(TAG, <span class="hljs-string">&quot;origin predict result:&quot;</span> + Arrays.toString(result)); 
+			<span class="hljs-type">long</span> <span class="hljs-variable">time</span> <span class="hljs-operator">=</span> end - start; Log.d(<span class="hljs-string">&quot;result length&quot;</span>, String.valueOf(result.length)); 
+			<span class="hljs-comment">// show predict result and time </span>
+			<span class="hljs-type">int</span> <span class="hljs-variable">r</span> <span class="hljs-operator">=</span> get_max_result(result); 
+			<span class="hljs-type">String</span> <span class="hljs-variable">show_text</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;result：&quot;</span> + r + <span class="hljs-string">&quot;\nname：&quot;</span> + resultLabel.get(r) + <span class="hljs-string">&quot;\nprobability：&quot;</span> + result[r] + <span class="hljs-string">&quot;\ntime：&quot;</span> + time + <span class="hljs-string">&quot;ms&quot;</span>; 
+			result_text.setText(show_text); 
+		} <span class="hljs-keyword">catch</span> (Exception e) { 
+			e.printStackTrace(); 
+		} 
+	} 
+
+	<span class="hljs-comment">// get max probability label </span>
+	<span class="hljs-keyword">private</span> <span class="hljs-type">int</span> <span class="hljs-title function_">get_max_result</span><span class="hljs-params">(<span class="hljs-type">float</span>[] result)</span> { 
+		<span class="hljs-type">float</span> <span class="hljs-variable">probability</span> <span class="hljs-operator">=</span> result[<span class="hljs-number">0</span>]; 
+		<span class="hljs-type">int</span> <span class="hljs-variable">r</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; 
+		<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; result.length; i++) { 
+			<span class="hljs-keyword">if</span> (probability &lt; result[i]) { 
+				probability = result[i]; 
+				r = i; 
+			}
+		} 
+		<span class="hljs-keyword">return</span> r; 
+	} 
+
+	<span class="hljs-comment">// request permissions </span>
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">request_permissions</span><span class="hljs-params">()</span> { 
+		List&lt;String&gt; permissionList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;(); 
+		<span class="hljs-keyword">if</span> (ContextCompat.checkSelfPermission(<span class="hljs-built_in">this</span>, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) { 
+			permissionList.add(Manifest.permission.CAMERA); 
+		} 
+		
+		<span class="hljs-keyword">if</span> (ContextCompat.checkSelfPermission(<span class="hljs-built_in">this</span>, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) { 
+			permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE); 
+		} 
+
+		<span class="hljs-keyword">if</span> (ContextCompat.checkSelfPermission(<span class="hljs-built_in">this</span>, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) { 
+			permissionList.add(Manifest.permission.READ_EXTERNAL_STORAGE); 
+		} 
+
+		<span class="hljs-comment">// if list is not empty will request permissions </span>
+		<span class="hljs-keyword">if</span> (!permissionList.isEmpty()) { 
+			ActivityCompat.requestPermissions(<span class="hljs-built_in">this</span>, permissionList.toArray(<span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>[permissionList.size()]), <span class="hljs-number">1</span>); 
+		} 
+	} 
+
+	<span class="hljs-meta">@Override</span> 
+	<span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">onRequestPermissionsResult</span><span class="hljs-params">(<span class="hljs-type">int</span> requestCode, <span class="hljs-meta">@NonNull</span> String[] permissions, <span class="hljs-meta">@NonNull</span> <span class="hljs-type">int</span>[] grantResults)</span> { 
+		<span class="hljs-built_in">super</span>.onRequestPermissionsResult(requestCode, permissions, grantResults); 
+		<span class="hljs-keyword">switch</span> (requestCode) { 
+			<span class="hljs-keyword">case</span> <span class="hljs-number">1</span>: 
+				<span class="hljs-keyword">if</span> (grantResults.length &gt; <span class="hljs-number">0</span>) { 
+					<span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; grantResults.length; i++) { 
+						<span class="hljs-type">int</span> <span class="hljs-variable">grantResult</span> <span class="hljs-operator">=</span> grantResults[i]; 
+						<span class="hljs-keyword">if</span> (grantResult == PackageManager.PERMISSION_DENIED) { 
+							<span class="hljs-type">String</span> <span class="hljs-variable">s</span> <span class="hljs-operator">=</span> permissions[i]; 
+							Toast.makeText(<span class="hljs-built_in">this</span>, s + <span class="hljs-string">&quot; permission was denied&quot;</span>, Toast.LENGTH_SHORT).show(); 
+						} 
+					} 
+				} 
+				<span class="hljs-keyword">break</span>; 
+		} 
+	} 
+}
+</code></pre>
+<p>(7)在项目的包com.example.ncnn1下，创建一个NcnnJni.java类，用于提供JNI接口，代码如下：</p>
+<pre><code class="language-java"><span class="hljs-keyword">package</span> com.example.ncnn1; 
+
+<span class="hljs-keyword">import</span> android.graphics.Bitmap; 
+
+<span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">NcnnJni</span> { 
+	<span class="hljs-keyword">public</span> <span class="hljs-keyword">native</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">Init</span><span class="hljs-params">(<span class="hljs-type">byte</span>[] param, <span class="hljs-type">byte</span>[] bin)</span>; 
+	<span class="hljs-keyword">public</span> <span class="hljs-keyword">native</span> <span class="hljs-type">float</span>[] Detect(Bitmap bitmap); 
+	
+	<span class="hljs-keyword">static</span> { 
+		System.loadLibrary(<span class="hljs-string">&quot;ncnn_jni&quot;</span>); 
+	} 
+}
+</code></pre>
+<p>(8)在项目的包com.example.ncnn1下，创建一个PhotoUtil.java类，这个是图片的工具类，代码如下：</p>
+<pre><code class="language-java"><span class="hljs-keyword">package</span> com.example.ncnn1; 
+
+<span class="hljs-keyword">import</span> android.app.Activity; 
+<span class="hljs-keyword">import</span> android.content.Context; 
+<span class="hljs-keyword">import</span> android.content.Intent; 
+<span class="hljs-keyword">import</span> android.database.Cursor; 
+<span class="hljs-keyword">import</span> android.graphics.Bitmap; 
+<span class="hljs-keyword">import</span> android.graphics.BitmapFactory; 
+<span class="hljs-keyword">import</span> android.net.Uri; 
+<span class="hljs-keyword">import</span> android.provider.MediaStore; 
+<span class="hljs-keyword">import</span> java.nio.FloatBuffer; 
+
+<span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">PhotoUtil</span> { 
+	<span class="hljs-comment">// get picture in photo </span>
+	<span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">use_photo</span><span class="hljs-params">(Activity activity, <span class="hljs-type">int</span> requestCode)</span> {
+		<span class="hljs-type">Intent</span> <span class="hljs-variable">intent</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Intent</span>(Intent.ACTION_PICK); 
+		intent.setType(<span class="hljs-string">&quot;image/*&quot;</span>); 
+		activity.startActivityForResult(intent, requestCode); 
+	} 
+
+	<span class="hljs-comment">// get photo from Uri </span>
+	<span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> String <span class="hljs-title function_">get_path_from_URI</span><span class="hljs-params">(Context context, Uri uri)</span> { 
+		String result; 
+		<span class="hljs-type">Cursor</span> <span class="hljs-variable">cursor</span> <span class="hljs-operator">=</span> context.getContentResolver().query(uri, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>); 
+		<span class="hljs-keyword">if</span> (cursor == <span class="hljs-literal">null</span>) { 
+			result = uri.getPath(); 
+		} <span class="hljs-keyword">else</span> { 
+			cursor.moveToFirst(); 
+			<span class="hljs-type">int</span> <span class="hljs-variable">idx</span> <span class="hljs-operator">=</span> cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA); 
+			result = cursor.getString(idx); 
+			cursor.close(); 
+		} 
+		<span class="hljs-keyword">return</span> result; 
+	} 
+
+	<span class="hljs-comment">// compress picture </span>
+	<span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> Bitmap <span class="hljs-title function_">getScaleBitmap</span><span class="hljs-params">(String filePath)</span> { 
+		BitmapFactory.<span class="hljs-type">Options</span> <span class="hljs-variable">opt</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">BitmapFactory</span>.Options(); 
+		opt.inJustDecodeBounds = <span class="hljs-literal">true</span>; 
+		BitmapFactory.decodeFile(filePath, opt); 
+
+		<span class="hljs-type">int</span> <span class="hljs-variable">bmpWidth</span> <span class="hljs-operator">=</span> opt.outWidth; 
+		<span class="hljs-type">int</span> <span class="hljs-variable">bmpHeight</span> <span class="hljs-operator">=</span> opt.outHeight; 
+		
+		<span class="hljs-type">int</span> <span class="hljs-variable">maxSize</span> <span class="hljs-operator">=</span> <span class="hljs-number">500</span>; 
+		
+		<span class="hljs-comment">// compress picture with inSampleSize </span>
+		opt.inSampleSize = <span class="hljs-number">1</span>; 
+		<span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) { 
+			<span class="hljs-keyword">if</span> (bmpWidth / opt.inSampleSize &lt; maxSize || bmpHeight / opt.inSampleSize &lt; maxSize) { 
+				<span class="hljs-keyword">break</span>; 
+			} 
+			opt.inSampleSize *= <span class="hljs-number">2</span>; 
+		} 
+		opt.inJustDecodeBounds = <span class="hljs-literal">false</span>; 
+		<span class="hljs-keyword">return</span> BitmapFactory.decodeFile(filePath, opt); 
+	} 
+}
+</code></pre>
+<p>(9)修改启动页面的布局，修改如下：</p>
+<pre><code class="language-xml"><span class="hljs-meta">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;utf-8&quot;</span>?&gt;</span> 
+<span class="hljs-tag">&lt;<span class="hljs-name">RelativeLayout</span> <span class="hljs-attr">xmlns:android</span>=<span class="hljs-string">&quot;http://schemas.android.com/apk/res/android&quot;</span>
+    <span class="hljs-attr">xmlns:app</span>=<span class="hljs-string">&quot;http://schemas.android.com/apk/res-auto&quot;</span>
+    <span class="hljs-attr">xmlns:tools</span>=<span class="hljs-string">&quot;http://schemas.android.com/tools&quot;</span>
+    <span class="hljs-attr">android:layout_width</span>=<span class="hljs-string">&quot;match_parent&quot;</span>
+    <span class="hljs-attr">android:layout_height</span>=<span class="hljs-string">&quot;match_parent&quot;</span>
+    <span class="hljs-attr">tools:context</span>=<span class="hljs-string">&quot;.MainActivity&quot;</span>&gt;</span> 
+
+    <span class="hljs-tag">&lt;<span class="hljs-name">LinearLayout</span>
+        <span class="hljs-attr">android:id</span>=<span class="hljs-string">&quot;@+id/btn_ll&quot;</span>
+        <span class="hljs-attr">android:layout_alignParentBottom</span>=<span class="hljs-string">&quot;true&quot;</span>
+        <span class="hljs-attr">android:layout_width</span>=<span class="hljs-string">&quot;match_parent&quot;</span>
+        <span class="hljs-attr">android:layout_height</span>=<span class="hljs-string">&quot;wrap_content&quot;</span>
+        <span class="hljs-attr">android:orientation</span>=<span class="hljs-string">&quot;horizontal&quot;</span>&gt;</span> 
+
+        <span class="hljs-tag">&lt;<span class="hljs-name">Button</span>
+            <span class="hljs-attr">android:id</span>=<span class="hljs-string">&quot;@+id/use_photo&quot;</span>
+            <span class="hljs-attr">android:layout_weight</span>=<span class="hljs-string">&quot;1&quot;</span>
+            <span class="hljs-attr">android:layout_width</span>=<span class="hljs-string">&quot;0dp&quot;</span>
+            <span class="hljs-attr">android:layout_height</span>=<span class="hljs-string">&quot;wrap_content&quot;</span>
+            <span class="hljs-attr">android:text</span>=<span class="hljs-string">&quot;相册&quot;</span> /&gt;</span> 
+
+    <span class="hljs-tag">&lt;/<span class="hljs-name">LinearLayout</span>&gt;</span> 
+
+    <span class="hljs-tag">&lt;<span class="hljs-name">TextView</span>
+    	<span class="hljs-attr">android:layout_above</span>=<span class="hljs-string">&quot;@id/btn_ll&quot;</span>
+    	<span class="hljs-attr">android:id</span>=<span class="hljs-string">&quot;@+id/result_text&quot;</span>
+    	<span class="hljs-attr">android:textSize</span>=<span class="hljs-string">&quot;16sp&quot;</span>
+    	<span class="hljs-attr">android:layout_width</span>=<span class="hljs-string">&quot;match_parent&quot;</span>
+    	<span class="hljs-attr">android:hint</span>=<span class="hljs-string">&quot;预测结果会在这里显示&quot;</span>
+    	<span class="hljs-attr">android:layout_height</span>=<span class="hljs-string">&quot;100dp&quot;</span> /&gt;</span> 
+    <span class="hljs-tag">&lt;<span class="hljs-name">ImageView</span>
+    	<span class="hljs-attr">android:layout_alignParentTop</span>=<span class="hljs-string">&quot;true&quot;</span>
+    	<span class="hljs-attr">android:layout_above</span>=<span class="hljs-string">&quot;@id/result_text&quot;</span>
+    	<span class="hljs-attr">android:id</span>=<span class="hljs-string">&quot;@+id/show_image&quot;</span>
+    	<span class="hljs-attr">android:layout_width</span>=<span class="hljs-string">&quot;match_parent&quot;</span>
+    	<span class="hljs-attr">android:layout_height</span>=<span class="hljs-string">&quot;match_parent&quot;</span> /&gt;</span> 
+<span class="hljs-tag">&lt;/<span class="hljs-name">RelativeLayout</span>&gt;</span>
+</code></pre>
+<p>(10)修改APP目录下的CMakeLists.txt文件，修改如下：</p>
+<pre><code># For more information about using CMake with Android Studio, read the 
+# documentation: https://d.android.com/studio/projects/add-native-code.html 
+
+# Sets the minimum version of CMake required to build the native library. 
+
+cmake_minimum_required(VERSION 3.4.1) 
+
+# Creates and names a library, sets it as either STATIC 
+# or SHARED, and provides the relative paths to its source code. 
+# You can define multiple libraries, and CMake builds them for you. 
+# Gradle automatically packages shared libraries with your APK. 
+set(ncnn_lib ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi-v7a/libncnn.a) 
+add_library (ncnn_lib STATIC IMPORTED) 
+set_target_properties(ncnn_lib PROPERTIES IMPORTED_LOCATION ${ncnn_lib}) 
+
+add_library( # Sets the name of the library. 
+			ncnn_jni 
+			# Sets the library as a shared library. 
+			SHARED 
+			
+			# Provides a relative path to your source file(s). 
+			src/main/cpp/ncnn_jni.cpp ) 
+
+# Searches for a specified prebuilt library and stores the path as a 
+# variable. Because CMake includes system libraries in the search path by 
+# default, you only need to specify the name of the public NDK library 
+# you want to add. CMake verifies that the library exists before 
+# completing its build. 
+
+find_library( # Sets the name of the path variable. 
+				log-lib 
+				
+				# Specifies the name of the NDK library that 
+				# you want CMake to locate. 
+				log ) 
+
+# Specifies libraries CMake should link to your target library. You 
+# can link multiple libraries, such as libraries you define in this 
+# build script, prebuilt third-party libraries, or system libraries. 
+
+target_link_libraries( # Specifies the target library. 
+						ncnn_jni 
+						ncnn_lib 
+						jnigraphics 
+
+						# Links the target library to the log library 
+						# included in the NDK. 
+						${log-lib} )
+</code></pre>
+<p>(11)修改APP目录下的build.gradle文件，修改如下：</p>
+<pre><code>apply plugin: 'com.android.application' 
+
+android { 
+	compileSdkVersion 28 
+	defaultConfig { 
+		applicationId &quot;com.example.ncnn1&quot; 
+		minSdkVersion 21 
+		targetSdkVersion 28 
+		versionCode 1 
+		versionName &quot;1.0&quot; 
+		testInstrumentationRunner &quot;android.support.test.runner.AndroidJUnitRunner&quot; 
+		externalNativeBuild { 
+			cmake { 
+				cppFlags &quot;-std=c++11 -fopenmp&quot; 
+				abiFilters &quot;armeabi-v7a&quot; 
+			}
+		}
+	} 
+	buildTypes { 
+		release { 
+			minifyEnabled false 
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro' 
+		}
+	} 
+	externalNativeBuild { 
+		cmake { 
+			path &quot;CMakeLists.txt&quot; 
+		} 
+	} 
+
+	sourceSets { 
+		main { 
+			jniLibs.srcDirs = [&quot;src/main/jniLibs&quot;] 
+			jni.srcDirs = ['src/cpp'] 
+		}
+	} 
+} 
+
+dependencies { 
+	implementation fileTree(dir: 'libs', include: ['*.jar']) 
+	implementation 'com.android.support:appcompat-v7:28.0.0-rc02' 
+	implementation 'com.android.support.constraint:constraint-layout:1.1.3' 
+	testImplementation 'junit:junit:4.12' 
+	implementation 'com.github.bumptech.glide:glide:4.3.1' 
+	androidTestImplementation 'com.android.support.test:runner:1.0.2' 
+	androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2' 
+}
+</code></pre>
+<p>(12)最后在配置文件中添加权限</p>
+<pre><code class="language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">uses-permission</span> <span class="hljs-attr">android:name</span>=<span class="hljs-string">&quot;android.permission.READ_EXTERNAL_STORAGE&quot;</span>/&gt;</span> 
+<span class="hljs-tag">&lt;<span class="hljs-name">uses-permission</span> <span class="hljs-attr">android:name</span>=<span class="hljs-string">&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;</span>/&gt;</span>
+</code></pre>
+<p>(13)编译完成</p>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            
+        </body>
+        </html>

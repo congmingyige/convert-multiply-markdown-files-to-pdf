@@ -156,3 +156,8 @@ def print_html_files(source_folder, output_folder):
 
 print_html_files(source_folder, output_folder)
 ````
+
+## 其它
+可以打开GitHub markdown对应的网页链接，然后打印。比如网页"https://github.com/scutan90/DeepLearning-500-questions/blob/master/ch01_%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/%E7%AC%AC%E4%B8%80%E7%AB%A0_%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80.md"
+但是，网页下有些公式也没有正确识别：
+![image](https://github.com/user-attachments/assets/008c1fd2-2cd6-4490-8c8f-36d921a0cdc6)

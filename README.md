@@ -11,7 +11,8 @@ DeepLearning-500-questions_pdf-html版本_20241023
 a. VScode插件Markdown All In One markdown转html，Ctrl+Shift+P，>Markdown All in One: 批量打印文档为HTML（选择文件夹）。批处理，支持多级文件夹的多个文件处理
 
 a.1 用代码修改一下格式
-
+<details>
+<summary>代码</summary>
 ````
 import os
 
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     else:
         print("No replacements made.")
 ````
-
+</details>
 
 b. 使用浏览器的Microsoft print to pdf，用代码，批处理，支持多级文件夹的多个文件处理
 ````

@@ -96,6 +96,7 @@ if __name__ == "__main__":
 </details>
 
 b. 使用浏览器的Microsoft print to pdf，用代码，批处理，支持多级文件夹的多个文件处理
+<details>
 ````
 import os
 import json
@@ -157,6 +158,7 @@ def print_html_files(source_folder, output_folder):
 
 print_html_files(source_folder, output_folder)
 ````
+</details>
 
 ## 其它
 可以打开GitHub markdown对应的网页链接，然后打印。比如网页"https://github.com/scutan90/DeepLearning-500-questions/blob/master/ch01_%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/%E7%AC%AC%E4%B8%80%E7%AB%A0_%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80.md"

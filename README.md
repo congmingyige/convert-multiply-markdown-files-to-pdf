@@ -10,7 +10,7 @@ DeepLearning-500-questions_pdf-html版本_20241023
 几乎完美解决问题，除了有些图片放得比较大，图片质量低的时候看起来效果不太好之外，其它，公式、格式、粗体、换行，基本没什么问题
 a. VScode插件Markdown All In One markdown转html，Ctrl+Shift+P，>Markdown All in One: 批量打印文档为HTML（选择文件夹）。批处理，支持多级文件夹的多个文件处理
 
-a.1 修改Markdown文件格式的Python代码(Markdown文件有些格式不兼容)
+a.1 修改Markdown文件格式(Markdown文件有些格式不兼容)。Python代码
 <details>
 <summary>代码</summary>
     
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 ````
 </details>
 
-b. 使用浏览器的Microsoft print to pdf，用Python代码，批处理，支持多级文件夹的多个文件处理
+b. 使用浏览器的Microsoft print to pdf，批处理，支持多级文件夹的多个文件处理。Python代码
 <details>
 <summary>代码</summary>
     
